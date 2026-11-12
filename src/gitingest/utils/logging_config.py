@@ -135,9 +135,10 @@ def configure_logging() -> None:
     # Remove default handler
     logger.remove()
 
-    # Check if we're in Kubernetes or production environment
+    # Check if we're in Kubernetes, Cloud Run, or production environment
     is_k8s = os.getenv("KUBERNETES_SERVICE_HOST") is not None
-    log_format = os.getenv("LOG_FORMAT", "json" if is_k8s else "human")
+    is_cloud_run = os.getenv("K_SERVICE") is not None
+    log_format = os.getenv("LOG_FORMAT", "json" if (is_k8s or is_cloud_run) else "human")
     log_level = os.getenv("LOG_LEVEL", "INFO")
 
     if log_format.lower() == "json":

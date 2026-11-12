@@ -13,7 +13,7 @@ COPY src/ ./src/
 
 RUN set -eux; \
     pip install --no-cache-dir --upgrade pip; \
-    pip install --no-cache-dir --timeout 1000 .[server,mcp]
+    pip install --no-cache-dir --timeout 1000 .[server]
 
 # Stage 2: Runtime image
 FROM python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
@@ -26,6 +26,8 @@ ARG APP_VERSION_URL=https://github.com/coderamp-labs/gitingest
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    GIT_TERMINAL_PROMPT=0 \
+    TIKTOKEN_CACHE_DIR=/app/.tiktoken_cache \
     APP_REPOSITORY=${APP_REPOSITORY} \
     APP_VERSION=${APP_VERSION} \
     APP_VERSION_URL=${APP_VERSION_URL}
@@ -44,8 +46,9 @@ RUN set -eux; \
 COPY --from=python-builder --chown=$UID:$GID /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --chown=$UID:$GID src/ ./
 
-RUN set -eux; \
-    chown -R appuser:appuser /app
+# Pre-cache tiktoken encoding so runtime requests do not depend on downloading it
+RUN python -c "import tiktoken; tiktoken.get_encoding('o200k_base')" \
+    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000

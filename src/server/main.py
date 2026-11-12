@@ -80,13 +80,15 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # Fetch allowed hosts from the environment or use the default values
-allowed_hosts = os.getenv("ALLOWED_HOSTS")
-if allowed_hosts:
-    allowed_hosts = allowed_hosts.split(",")
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS")
+if allowed_hosts_env:
+    allowed_hosts = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
 else:
     # Define the default allowed hosts for the application
-    default_allowed_hosts = ["gitingest.com", "*.gitingest.com", "localhost", "127.0.0.1"]
-    allowed_hosts = default_allowed_hosts
+    allowed_hosts = ["gitingest.com", "*.gitingest.com", "localhost", "127.0.0.1"]
+    if os.getenv("K_SERVICE"):
+        # Allow Cloud Run service URLs when running on Google Cloud Run
+        allowed_hosts.extend(["*.run.app", "*.a.run.app"])
 
 # Add middleware to enforce allowed hosts
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
@@ -133,7 +135,7 @@ async def robots() -> FileResponse:
     - **FileResponse**: The ``robots.txt`` file located in the static directory
 
     """
-    return FileResponse("static/robots.txt")
+    return FileResponse(static_dir / "robots.txt")
 
 
 @app.get("/llms.txt")
@@ -149,7 +151,7 @@ async def llm_txt() -> FileResponse:
     - **FileResponse**: The ``llms.txt`` file located in the static directory
 
     """
-    return FileResponse("static/llms.txt")
+    return FileResponse(static_dir / "llms.txt")
 
 
 @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)

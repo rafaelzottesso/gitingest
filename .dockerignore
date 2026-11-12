@@ -61,9 +61,11 @@ LICENSE
 # Local overrides & secrets
 .env
 
-# Docker files
+# Docker & deploy files
 .dockerignore
 Dockerfile*
+compose.yml
+deploy-cloudrun.sh
 
 # -------------------------------------------------
 # Files required during build

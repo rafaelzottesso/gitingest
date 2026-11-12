@@ -28,5 +28,7 @@ if __name__ == "__main__":
         host=host,
         port=port,
         reload=reload,
+        proxy_headers=True,
+        forwarded_allow_ips=os.getenv("FORWARDED_ALLOW_IPS", "*"),
         log_config=None,  # Disable uvicorn's default logging config
     )

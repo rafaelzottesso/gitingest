@@ -1,0 +1,56 @@
+# Operating-system
+.DS_Store
+Thumbs.db
+
+# Editor / IDE settings
+.vscode/
+.idea/
+*.swp
+
+# Python virtual-envs & tooling
+.venv*/
+.python-version
+__pycache__/
+*.egg-info/
+*.egg
+.ruff_cache/
+
+# Test artifacts & coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Build, distribution & docs
+build/
+dist/
+*.wheel
+
+# Logs & runtime output
+*.log
+logs/
+*.tmp
+tmp/
+
+# Project-specific temporary files
+history.txt
+digest.txt
+
+# Git history & local configs
+.git/
+.github/
+.gitignore
+.env
+.env.*
+
+# Tests & Docs
+tests/
+docs/
+*.md
+LICENSE
+
+# Local Docker Compose & deploy scripts (keep Dockerfile!)
+compose.yml
+.docker/
+deploy-cloudrun.sh
+
