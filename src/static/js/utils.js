@@ -129,12 +129,18 @@ function collectFormData(form) {
     const hiddenInput = document.getElementById('max_file_size_kb');
     const includePattern = document.getElementById('include_pattern');
     const excludePattern = document.getElementById('exclude_pattern');
+    const compactWhitespace = document.getElementById('compact_whitespace');
+    const stripComments = document.getElementById('strip_comments');
+    const compactFormat = document.getElementById('compact_format');
 
     if (inputText) {json_data.input_text = inputText.value;}
     if (token) {json_data.token = token.value;}
     if (hiddenInput) {json_data.max_file_size = hiddenInput.value;}
     if (includePattern) {json_data.include_pattern = includePattern.value;}
     if (excludePattern) {json_data.exclude_pattern = excludePattern.value;}
+    if (compactWhitespace) {json_data.compact_whitespace = compactWhitespace.checked;}
+    if (stripComments) {json_data.strip_comments = stripComments.checked;}
+    if (compactFormat) {json_data.compact_format = compactFormat.checked;}
 
     return json_data;
 }

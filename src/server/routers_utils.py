@@ -23,6 +23,9 @@ async def _perform_ingestion(
     include_pattern: str,
     exclude_pattern: str,
     token: str | None,
+    compact_whitespace: bool = False,  # noqa: FBT001, FBT002
+    strip_comments: bool = False,  # noqa: FBT001, FBT002
+    compact_format: bool = False,  # noqa: FBT001, FBT002
 ) -> JSONResponse:
     """Run ``process_query`` and wrap the result in a ``FastAPI`` ``JSONResponse``.
 
@@ -35,6 +38,9 @@ async def _perform_ingestion(
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
             token=token,
+            compact_whitespace=compact_whitespace,
+            strip_comments=strip_comments,
+            compact_format=compact_format,
         )
 
         if isinstance(result, IngestErrorResponse):

@@ -145,6 +145,37 @@
                     </div>
                 </div>
             </div>
+            <!-- Compression options (reduce tokens sent to LLMs) -->
+            <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-gray-900">
+                <span class="text-gray-700">Reduce tokens:</span>
+                <label for="compact_whitespace"
+                       class="flex items-center gap-2 cursor-pointer"
+                       title="Trim trailing spaces, collapse blank lines, 4-space indent to 2">
+                    <input type="checkbox"
+                           id="compact_whitespace"
+                           name="compact_whitespace"
+                           class="cursor-pointer w-5 h-5 accent-[#FE4A60]">
+                    Compact whitespace
+                </label>
+                <label for="strip_comments"
+                       class="flex items-center gap-2 cursor-pointer"
+                       title="Remove comments and Python docstrings (Python, JS/TS, Java, C-family, Go, Rust, shell, YAML...)">
+                    <input type="checkbox"
+                           id="strip_comments"
+                           name="strip_comments"
+                           class="cursor-pointer w-5 h-5 accent-[#FE4A60]">
+                    Remove comments
+                </label>
+                <label for="compact_format"
+                       class="flex items-center gap-2 cursor-pointer"
+                       title="Short file headers and a plain indented tree instead of ==== and box characters">
+                    <input type="checkbox"
+                           id="compact_format"
+                           name="compact_format"
+                           class="cursor-pointer w-5 h-5 accent-[#FE4A60]">
+                    Compact format
+                </label>
+            </div>
         </form>
         <!-- Example repositories section -->
         {% if show_examples %}

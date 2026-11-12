@@ -39,6 +39,12 @@ class IngestRequest(BaseModel):
         Deprecated. Together with ``pattern``, kept for backward compatibility.
     pattern : str
         Deprecated. Applied to ``include_pattern`` or ``exclude_pattern`` according to ``pattern_type``.
+    compact_whitespace : bool
+        Trim trailing spaces, collapse blank lines and shrink 4-space indentation to 2.
+    strip_comments : bool
+        Remove comments and Python docstrings (supported languages only).
+    compact_format : bool
+        Use short file headers and a plain indented tree to save tokens.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
 
@@ -53,6 +59,9 @@ class IngestRequest(BaseModel):
         description="Deprecated: use include_pattern/exclude_pattern",
     )
     pattern: str = Field(default="", description="Deprecated: use include_pattern/exclude_pattern")
+    compact_whitespace: bool = Field(default=False, description="Trim whitespace and shrink indentation")
+    strip_comments: bool = Field(default=False, description="Remove comments and docstrings")
+    compact_format: bool = Field(default=False, description="Use short file headers and a plain tree")
     token: str | None = Field(default=None, description="GitHub PAT for private repositories")
 
     @field_validator("input_text")

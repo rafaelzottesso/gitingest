@@ -46,6 +46,9 @@ async def api_ingest(
         include_pattern=ingest_request.include_pattern,
         exclude_pattern=ingest_request.exclude_pattern,
         token=ingest_request.token,
+        compact_whitespace=ingest_request.compact_whitespace,
+        strip_comments=ingest_request.strip_comments,
+        compact_format=ingest_request.compact_format,
     )
     # limit URL to 255 characters
     ingest_counter.labels(status=response.status_code, url=ingest_request.input_text[:255]).inc()
@@ -63,6 +66,9 @@ async def api_ingest_get(
     exclude_pattern: str = "",
     pattern_type: str = "",
     pattern: str = "",
+    compact_whitespace: bool = False,
+    strip_comments: bool = False,
+    compact_format: bool = False,
     token: str = "",
 ) -> JSONResponse:
     """Ingest a GitHub repository via GET and return processed content.
@@ -80,6 +86,9 @@ async def api_ingest_get(
     - **include_pattern** (`str`, optional): Patterns of files to include (default: "")
     - **exclude_pattern** (`str`, optional): Patterns of files to exclude; can be combined with `include_pattern` (default: "")
     - **pattern_type** / **pattern** (`str`, optional): Deprecated; `pattern` is applied to the include or exclude list according to `pattern_type`
+    - **compact_whitespace** (`bool`, optional): Trim whitespace, collapse blank lines, shrink indentation (default: false)
+    - **strip_comments** (`bool`, optional): Remove comments and Python docstrings (default: false)
+    - **compact_format** (`bool`, optional): Use short file headers and a plain tree (default: false)
     - **token** (`str`, optional): GitHub personal access token for private repositories (default: "")
 
     **Returns**
@@ -97,6 +106,9 @@ async def api_ingest_get(
         include_pattern=include_pattern,
         exclude_pattern=exclude_pattern,
         token=token or None,
+        compact_whitespace=compact_whitespace,
+        strip_comments=strip_comments,
+        compact_format=compact_format,
     )
     # limit URL to 255 characters
     ingest_counter.labels(status=response.status_code, url=f"{user}/{repository}"[:255]).inc()

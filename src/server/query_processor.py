@@ -32,6 +32,12 @@ if TYPE_CHECKING:
     from gitingest.schemas.ingestion import IngestionQuery
 
 
+def _compression_key(query: IngestionQuery) -> str:
+    """Return a short identifier of the enabled compression options (empty when none)."""
+    flags = {"w": query.compact_whitespace, "c": query.strip_comments, "f": query.compact_format}
+    return "".join(k for k, v in flags.items() if v)
+
+
 def _cleanup_repository(clone_config: CloneConfig) -> None:
     """Clean up the cloned repository after processing."""
     try:
@@ -93,6 +99,7 @@ async def _check_s3_cache(
             subpath=query.subpath,
             include_patterns=query.include_patterns,
             ignore_patterns=query.ignore_patterns,
+            compression=_compression_key(query),
         )
 
         # Check if file exists on S3
@@ -172,6 +179,7 @@ def _store_digest_content(
             subpath=query.subpath,
             include_patterns=query.include_patterns,
             ignore_patterns=query.ignore_patterns,
+            compression=_compression_key(query),
         )
         s3_url = upload_to_s3(content=digest_content, s3_file_path=s3_file_path, ingest_id=query.id)
 
@@ -232,6 +240,10 @@ async def process_query(
     include_pattern: str = "",
     exclude_pattern: str = "",
     token: str | None = None,
+    *,
+    compact_whitespace: bool = False,
+    strip_comments: bool = False,
+    compact_format: bool = False,
 ) -> IngestResponse:
     """Process a query by parsing input, cloning a repository, and generating a summary.
 
@@ -250,6 +262,12 @@ async def process_query(
         Patterns of files to exclude from the query. Can be combined with ``include_pattern``.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
+    compact_whitespace : bool
+        Trim trailing spaces, collapse blank lines and shrink indentation.
+    strip_comments : bool
+        Remove comments and Python docstrings from supported languages.
+    compact_format : bool
+        Use short file headers and a plain indented tree.
 
     Returns
     -------
@@ -272,6 +290,9 @@ async def process_query(
         return IngestErrorResponse(error=str(exc))
 
     query.url = cast("str", query.url)
+    query.compact_whitespace = compact_whitespace
+    query.strip_comments = strip_comments
+    query.compact_format = compact_format
     query.max_file_size = max_file_size * 1024  # Convert to bytes since we currently use KB in higher levels
     query.ignore_patterns, query.include_patterns = process_patterns(
         exclude_patterns=exclude_pattern or None,

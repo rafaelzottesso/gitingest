@@ -65,6 +65,7 @@ def generate_s3_file_path(
     subpath: str,
     include_patterns: set[str] | None,
     ignore_patterns: set[str],
+    compression: str = "",
 ) -> str:
     """Generate S3 file path with proper naming convention.
 
@@ -92,6 +93,8 @@ def generate_s3_file_path(
         Set of patterns specifying which files to include.
     ignore_patterns : set[str]
         Set of patterns specifying which files to exclude.
+    compression : str
+        Identifier of the enabled compression options (part of the cache key).
 
     Returns
     -------
@@ -113,6 +116,8 @@ def generate_s3_file_path(
     # Create hash of exclude/include patterns for uniqueness
     patterns_str = f"include:{sorted(include_patterns) if include_patterns else []}"
     patterns_str += f"exclude:{sorted(ignore_patterns)}"
+    if compression:
+        patterns_str += f"compression:{compression}"
     patterns_hash = hashlib.sha256(patterns_str.encode()).hexdigest()[:16]
     subpath_hash = hashlib.sha256(subpath.encode()).hexdigest()[:16]
 

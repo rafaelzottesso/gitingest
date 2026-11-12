@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import ssl
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,9 @@ import requests.exceptions
 import tiktoken
 
 from gitingest.schemas import FileSystemNode, FileSystemNodeType
+from gitingest.schemas.filesystem import SEPARATOR
 from gitingest.utils.compat_func import readlink
+from gitingest.utils.compression import compress_content
 from gitingest.utils.logging_config import get_logger
 
 if TYPE_CHECKING:
@@ -53,7 +56,7 @@ def format_node(node: FileSystemNode, query: IngestionQuery) -> tuple[str, str, 
 
     tree = "Directory structure:\n" + _create_tree_structure(query, node=node)
 
-    content = _gather_file_contents(node)
+    content = _gather_file_contents(node, query)
 
     token_estimate = _format_token_count(tree + content)
     if token_estimate:
@@ -102,7 +105,7 @@ def _create_summary_prefix(query: IngestionQuery, *, single_file: bool = False) 
     return "\n".join(parts) + "\n"
 
 
-def _gather_file_contents(node: FileSystemNode) -> str:
+def _gather_file_contents(node: FileSystemNode, query: IngestionQuery) -> str:
     """Recursively gather contents of all files under the given node.
 
     This function recursively processes a directory node and gathers the contents of all files
@@ -112,6 +115,8 @@ def _gather_file_contents(node: FileSystemNode) -> str:
     ----------
     node : FileSystemNode
         The current directory or file node being processed.
+    query : IngestionQuery
+        The parsed query object (holds the compression options).
 
     Returns
     -------
@@ -120,10 +125,32 @@ def _gather_file_contents(node: FileSystemNode) -> str:
 
     """
     if node.type != FileSystemNodeType.DIRECTORY:
-        return node.content_string
+        return _file_block(node, query)
 
     # Recursively gather contents of all files under the current directory
-    return "\n".join(_gather_file_contents(child) for child in node.children)
+    return "\n".join(_gather_file_contents(child, query) for child in node.children)
+
+
+def _file_block(node: FileSystemNode, query: IngestionQuery) -> str:
+    """Render one file (header + content), applying the compression options of the query."""
+    if not (query.compact_whitespace or query.strip_comments or query.compact_format):
+        return node.content_string
+
+    path = str(node.path_str).replace(os.sep, "/")
+    content = node.content
+    if node.type == FileSystemNodeType.FILE:
+        content = compress_content(
+            content,
+            path,
+            compact_whitespace=query.compact_whitespace,
+            strip_comments=query.strip_comments,
+        )
+
+    if not query.compact_format:
+        link = f" -> {readlink(node.path).name}" if node.type == FileSystemNodeType.SYMLINK else ""
+        return "\n".join([SEPARATOR, f"{node.type.name}: {path}{link}", SEPARATOR, content]) + "\n\n"
+
+    return f"### {path}\n{content.rstrip(chr(10))}\n"
 
 
 def _create_tree_structure(
@@ -160,7 +187,11 @@ def _create_tree_structure(
         node.name = query.slug
 
     tree_str = ""
-    current_prefix = "└── " if is_last else "├── "
+    if query.compact_format:
+        # Plain 4-space indentation (same column layout as the box-drawing tree, which the web UI relies on)
+        current_prefix = "    "
+    else:
+        current_prefix = "└── " if is_last else "├── "
 
     # Indicate directories with a trailing slash
     display_name = node.name
@@ -172,7 +203,7 @@ def _create_tree_structure(
     tree_str += f"{prefix}{current_prefix}{display_name}\n"
 
     if node.type == FileSystemNodeType.DIRECTORY and node.children:
-        prefix += "    " if is_last else "│   "
+        prefix += "    " if is_last or query.compact_format else "│   "
         for i, child in enumerate(node.children):
             tree_str += _create_tree_structure(query, node=child, prefix=prefix, is_last=i == len(node.children) - 1)
     return tree_str
