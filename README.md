@@ -1,45 +1,30 @@
 # Gitingest
 
-[![Screenshot of Gitingest front page](https://raw.githubusercontent.com/coderamp-labs/gitingest/refs/heads/main/docs/frontpage.png)](https://gitingest.com)
+![Screenshot of Gitingest front page](docs/frontpage.png)
 
-<!-- Badges -->
-<!-- markdownlint-disable MD033 -->
-<p align="center">
-  <!-- row 1 — install & compat -->
-  <a href="https://pypi.org/project/gitingest"><img src="https://img.shields.io/pypi/v/gitingest.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/gitingest"><img src="https://img.shields.io/pypi/pyversions/gitingest.svg" alt="Python Versions"></a>
-  <br>
-  <!-- row 2 — quality & community -->
-  <a href="https://github.com/coderamp-labs/gitingest/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/coderamp-labs/gitingest/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-
-  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/coderamp-labs/gitingest"><img src="https://api.scorecard.dev/projects/github.com/coderamp-labs/gitingest/badge" alt="OpenSSF Scorecard"></a>
-  <br>
-  <a href="https://github.com/coderamp-labs/gitingest/blob/main/LICENSE"><img src="https://img.shields.io/github/license/coderamp-labs/gitingest.svg" alt="License"></a>
-  <a href="https://pepy.tech/project/gitingest"><img src="https://pepy.tech/badge/gitingest" alt="Downloads"></a>
-  <a href="https://github.com/coderamp-labs/gitingest"><img src="https://img.shields.io/github/stars/coderamp-labs/gitingest" alt="GitHub Stars"></a>
-  <a href="https://discord.com/invite/zerRaGK9EC"><img src="https://img.shields.io/badge/Discord-Join_chat-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
-  <br>
-  <a href="https://trendshift.io/repositories/13519"><img src="https://trendshift.io/api/badge/repositories/13519" alt="Trendshift" height="50"></a>
-</p>
-<!-- markdownlint-enable MD033 -->
 
 Turn any Git repository into a prompt-friendly text ingest for LLMs.
 
-You can also replace `hub` with `ingest` in any GitHub URL to access the corresponding digest.
+> **This is a personal/academic fork** of [coderamp-labs/gitingest](https://github.com/coderamp-labs/gitingest)
+> (by Romain Courtois, Filip Christiansen and contributors), released under the [MIT License](./LICENSE).
+> It is not affiliated with, endorsed by, or the same service as [gitingest.com](https://gitingest.com).
+> It is not published to PyPI and is not maintained as a public project: install and run it from source.
 
-<!-- Extensions -->
-[gitingest.com](https://gitingest.com) · [Chrome Extension](https://chromewebstore.google.com/detail/adfjahbijlkjfoicpjkhjicpjpjfaood) · [Firefox Add-on](https://addons.mozilla.org/firefox/addon/gitingest)
+## 🔀 What is different in this fork
 
-<!-- Languages -->
-[Deutsch](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=de) |
-[Español](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=es) |
-[Français](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=fr) |
-[日本語](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=ja) |
-[한국어](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=ko) |
-[Português](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=pt) |
-[Русский](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=ru) |
-[中文](https://www.readme-i18n.com/coderamp-labs/gitingest?lang=zh)
+- **Include and exclude together (web UI and API)**: the web form has separate *Include* and *Exclude* fields, so you
+  can, for example, include `*.py` and exclude `__init__.py` in the same run. The API accepts `include_pattern` and
+  `exclude_pattern` (the old `pattern_type` + `pattern` pair is still accepted and mapped to the new fields).
+- **Token-saving options** (opt-in checkboxes under *Reduce tokens*, also API parameters):
+  - `compact_whitespace`: trims trailing spaces, collapses blank-line runs and shrinks consistent 4-space indentation to 2.
+  - `strip_comments`: removes comments (and Python docstrings) for Python, JS/TS, Java, C-family, Go, Rust, PHP and CSS, and
+    full-line `#` comments for shell, Ruby, YAML, TOML and Dockerfile. Files that cannot be parsed safely are left untouched.
+    It is lossy and heuristic (e.g. a JavaScript regex literal containing `//` may be misread), so it is off by default.
+  - `compact_format`: short `### path` file headers and a plain indented tree instead of `====` blocks and box-drawing characters.
+- **Compatibility**: templates use the request-first `TemplateResponse(request, name, context)` signature, so the server runs on
+  current Starlette (1.x) as well as older releases.
+
+These options exist only in the web server and its API; the `gitingest` CLI and the Python `ingest()` function have no flags for them yet.
 
 ## 🚀 Features
 
@@ -57,55 +42,18 @@ You can also replace `hub` with `ingest` in any GitHub URL to access the corresp
 - Python 3.8+
 - For private repositories: A GitHub Personal Access Token (PAT). [Generate your token **here**!](https://github.com/settings/tokens/new?description=gitingest&scopes=repo)
 
-### 📦 Installation
+### 📦 Installation (from source)
 
-Gitingest is available on [PyPI](https://pypi.org/project/gitingest/).
-You can install it using `pip`:
-
-```bash
-pip install gitingest
-```
-
-or
+This fork is not on PyPI (the `gitingest` package there is the original project). Clone it and install in a virtual environment:
 
 ```bash
-pip install gitingest[server]
+git clone https://github.com/rafaelzottesso/gitingest.git
+cd gitingest
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[server]"
 ```
 
-to include server dependencies for self-hosting.
-
-However, it might be a good idea to use `pipx` to install it.
-You can install `pipx` using your preferred package manager.
-
-```bash
-brew install pipx
-apt install pipx
-scoop install pipx
-...
-```
-
-If you are using pipx for the first time, run:
-
-```bash
-pipx ensurepath
-```
-
-```bash
-# install gitingest
-pipx install gitingest
-```
-
-## 🧩 Browser Extension Usage
-
-<!-- markdownlint-disable MD033 -->
-<a href="https://chromewebstore.google.com/detail/adfjahbijlkjfoicpjkhjicpjpjfaood" target="_blank" title="Get Gitingest Extension from Chrome Web Store"><img height="48" src="https://github.com/user-attachments/assets/20a6e44b-fd46-4e6c-8ea6-aad436035753" alt="Available in the Chrome Web Store" /></a>
-<a href="https://addons.mozilla.org/firefox/addon/gitingest" target="_blank" title="Get Gitingest Extension from Firefox Add-ons"><img height="48" src="https://github.com/user-attachments/assets/c0e99e6b-97cf-4af2-9737-099db7d3538b" alt="Get The Add-on for Firefox" /></a>
-<a href="https://microsoftedge.microsoft.com/addons/detail/nfobhllgcekbmpifkjlopfdfdmljmipf" target="_blank" title="Get Gitingest Extension from Microsoft Edge Add-ons"><img height="48" src="https://github.com/user-attachments/assets/204157eb-4cae-4c0e-b2cb-db514419fd9e" alt="Get from the Edge Add-ons" /></a>
-<!-- markdownlint-enable MD033 -->
-
-The extension is open source at [lcandy2/gitingest-extension](https://github.com/lcandy2/gitingest-extension).
-
-Issues and feature requests are welcome to the repo.
+Omit `[server]` if you only need the CLI / Python package.
 
 ## 💡 Command line usage
 
@@ -203,6 +151,24 @@ summary, tree, content = await ingest_async("path/to/directory")
 This is because Jupyter notebooks are asynchronous by default.
 
 ## 🐳 Self-host
+
+### Run locally (without Docker)
+
+```bash
+pip install -e ".[server]"
+cd src && python -m server
+```
+
+The app is served at `http://localhost:8000`.
+
+### Notes for public deployments
+
+- Set `ALLOWED_HOSTS` to your own domain; the default list only has the original project's domain and localhost.
+- The pages load `posthog.js` (analytics of the original project) and can report to Sentry. Remove or replace the PostHog
+  snippet (`src/static/js/posthog.js`) before publishing, and only enable Sentry with your own DSN.
+- Anyone who can reach the service can make it clone repositories: use a request limit, an instance cap and billing alerts.
+- Tokens typed in the form are used once for cloning and are not stored, but you become responsible for them if others use your instance.
+
 
 ### Using Docker
 
@@ -327,15 +293,10 @@ docker compose --profile prod up -d
 
 ## 🤝 Contributing
 
-### Non-technical ways to contribute
-
-- **Create an Issue**: If you find a bug or have an idea for a new feature, please [create an issue](https://github.com/coderamp-labs/gitingest/issues/new) on GitHub. This will help us track and prioritize your request.
-- **Spread the Word**: If you like Gitingest, please share it with your friends, colleagues, and on social media. This will help us grow the community and make Gitingest even better.
-- **Use Gitingest**: The best feedback comes from real-world usage! If you encounter any issues or have ideas for improvement, please let us know by [creating an issue](https://github.com/coderamp-labs/gitingest/issues/new) on GitHub or by reaching out to us on [Discord](https://discord.com/invite/zerRaGK9EC).
-
-### Technical ways to contribute
-
-Gitingest aims to be friendly for first time contributors, with a simple Python and HTML codebase. If you need any help while working with the code, reach out to us on [Discord](https://discord.com/invite/zerRaGK9EC). For detailed instructions on how to make a pull request, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+This fork is mostly for personal and academic use. To contribute to the real project, report bugs unrelated to the changes above,
+or use its Discord and browser extensions ([Chrome](https://chromewebstore.google.com/detail/adfjahbijlkjfoicpjkhjicpjpjfaood),
+[Firefox](https://addons.mozilla.org/firefox/addon/gitingest)), go to the original repository:
+<https://github.com/coderamp-labs/gitingest>. Development setup is in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## 🛠️ Stack
 
@@ -350,6 +311,8 @@ Gitingest aims to be friendly for first time contributors, with a simple Python 
 
 Check out the NPM alternative 📦 Repomix: <https://github.com/yamadashy/repomix>
 
-## 🚀 Project Growth
+## 🙏 Credits and license
 
-[![Star History Chart](https://api.star-history.com/svg?repos=coderamp-labs/gitingest&type=Date)](https://star-history.com/#coderamp-labs/gitingest&Date)
+Gitingest was created by [Romain Courtois](https://github.com/cyclotruc) and Filip Christiansen and is maintained by the
+[coderamp-labs](https://github.com/coderamp-labs) community. This fork keeps the original [MIT License](./LICENSE); keep the
+license and copyright notice when reusing the code.
