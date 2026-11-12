@@ -52,8 +52,8 @@ async def test_remote_repository_analysis(request: pytest.FixtureRequest) -> Non
     form_data = {
         "input_text": "https://github.com/octocat/Hello-World",
         "max_file_size": 243,
-        "pattern_type": "exclude",
-        "pattern": "",
+        "include_pattern": "",
+        "exclude_pattern": "",
         "token": "",
     }
 
@@ -77,8 +77,8 @@ async def test_invalid_repository_url(request: pytest.FixtureRequest) -> None:
     form_data = {
         "input_text": "https://github.com/nonexistent/repo",
         "max_file_size": 243,
-        "pattern_type": "exclude",
-        "pattern": "",
+        "include_pattern": "",
+        "exclude_pattern": "",
         "token": "",
     }
 
@@ -99,8 +99,8 @@ async def test_large_repository(request: pytest.FixtureRequest) -> None:
     form_data = {
         "input_text": "https://github.com/octocat/hello-world",
         "max_file_size": 10,
-        "pattern_type": "exclude",
-        "pattern": "",
+        "include_pattern": "",
+        "exclude_pattern": "",
         "token": "",
     }
 
@@ -124,8 +124,8 @@ async def test_concurrent_requests(request: pytest.FixtureRequest) -> None:
         form_data = {
             "input_text": "https://github.com/octocat/hello-world",
             "max_file_size": 243,
-            "pattern_type": "exclude",
-            "pattern": "",
+            "include_pattern": "",
+            "exclude_pattern": "",
             "token": "",
         }
         response = client.post("/api/ingest", json=form_data)
@@ -151,8 +151,8 @@ async def test_large_file_handling(request: pytest.FixtureRequest) -> None:
     form_data = {
         "input_text": "https://github.com/octocat/Hello-World",
         "max_file_size": 1,
-        "pattern_type": "exclude",
-        "pattern": "",
+        "include_pattern": "",
+        "exclude_pattern": "",
         "token": "",
     }
 
@@ -174,8 +174,8 @@ async def test_repository_with_patterns(request: pytest.FixtureRequest) -> None:
     form_data = {
         "input_text": "https://github.com/octocat/Hello-World",
         "max_file_size": 243,
-        "pattern_type": "include",
-        "pattern": "*.md",
+        "include_pattern": "*.md",
+        "exclude_pattern": "README",
         "token": "",
     }
 
@@ -185,9 +185,7 @@ async def test_repository_with_patterns(request: pytest.FixtureRequest) -> None:
     response_data = response.json()
     if response.status_code == status.HTTP_200_OK:
         assert "content" in response_data
-        assert "pattern_type" in response_data
-        assert response_data["pattern_type"] == "include"
-        assert "pattern" in response_data
-        assert response_data["pattern"] == "*.md"
+        assert response_data["include_pattern"] == "*.md"
+        assert response_data["exclude_pattern"] == "README"
     else:
         assert "error" in response_data

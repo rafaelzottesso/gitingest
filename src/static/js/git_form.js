@@ -1,4 +1,4 @@
-// Strike-through / un-strike file lines when the pattern-type menu flips.
+// Reset tree strike-through state.
 function changePattern() {
     const dirPre = document.getElementById('directory-structure-pre');
 
@@ -11,13 +11,6 @@ function changePattern() {
         element.classList.remove('line-through');
         element.classList.remove('text-gray-500');
     });
-
-    // Reset the pattern input field
-    const patternInput = document.getElementById('pattern');
-
-    if (patternInput) {
-        patternInput.value = '';
-    }
 }
 
 // Show/hide the Personal-Access-Token section when the "Private repository" checkbox is toggled.

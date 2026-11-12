@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import status
 from fastapi.responses import JSONResponse
 
-from server.models import IngestErrorResponse, IngestSuccessResponse, PatternType
+from server.models import IngestErrorResponse, IngestSuccessResponse
 from server.query_processor import process_query
 
 COMMON_INGEST_RESPONSES: dict[int | str, dict[str, Any]] = {
@@ -20,8 +20,8 @@ COMMON_INGEST_RESPONSES: dict[int | str, dict[str, Any]] = {
 async def _perform_ingestion(
     input_text: str,
     max_file_size: int,
-    pattern_type: str,
-    pattern: str,
+    include_pattern: str,
+    exclude_pattern: str,
     token: str | None,
 ) -> JSONResponse:
     """Run ``process_query`` and wrap the result in a ``FastAPI`` ``JSONResponse``.
@@ -29,13 +29,11 @@ async def _perform_ingestion(
     Consolidates error handling shared by the ``POST`` and ``GET`` ingest endpoints.
     """
     try:
-        pattern_type = PatternType(pattern_type)
-
         result = await process_query(
             input_text=input_text,
             max_file_size=max_file_size,
-            pattern_type=pattern_type,
-            pattern=pattern,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
             token=token,
         )
 

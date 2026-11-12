@@ -12,7 +12,7 @@ from gitingest.query_parser import parse_remote_repo
 from gitingest.utils.git_utils import resolve_commit, validate_github_token
 from gitingest.utils.logging_config import get_logger
 from gitingest.utils.pattern_utils import process_patterns
-from server.models import IngestErrorResponse, IngestResponse, IngestSuccessResponse, PatternType, S3Metadata
+from server.models import IngestErrorResponse, IngestResponse, IngestSuccessResponse, S3Metadata
 from server.s3_utils import (
     _build_s3_url,
     check_s3_object_exists,
@@ -47,8 +47,8 @@ async def _check_s3_cache(
     query: IngestionQuery,
     input_text: str,
     max_file_size: int,
-    pattern_type: str,
-    pattern: str,
+    include_pattern: str,
+    exclude_pattern: str,
     token: str | None,
 ) -> IngestSuccessResponse | None:
     """Check if digest already exists on S3 and return response if found.
@@ -61,10 +61,10 @@ async def _check_s3_cache(
         Original input text.
     max_file_size : int
         Maximum file size in KB.
-    pattern_type : str
-        Pattern type (include/exclude).
-    pattern : str
-        Pattern string.
+    include_pattern : str
+        Include pattern string.
+    exclude_pattern : str
+        Exclude pattern string.
     token : str | None
         GitHub token.
 
@@ -125,8 +125,8 @@ async def _check_s3_cache(
                 tree=tree,
                 content=content,
                 default_max_file_size=max_file_size,
-                pattern_type=pattern_type,
-                pattern=pattern,
+                include_pattern=include_pattern,
+                exclude_pattern=exclude_pattern,
             )
     except Exception as exc:
         # Log the exception but don't fail the entire request
@@ -229,8 +229,8 @@ def _generate_digest_url(query: IngestionQuery) -> str:
 async def process_query(
     input_text: str,
     max_file_size: int,
-    pattern_type: PatternType,
-    pattern: str,
+    include_pattern: str = "",
+    exclude_pattern: str = "",
     token: str | None = None,
 ) -> IngestResponse:
     """Process a query by parsing input, cloning a repository, and generating a summary.
@@ -244,10 +244,10 @@ async def process_query(
         Input text provided by the user, typically a Git repository URL or slug.
     max_file_size : int
         Max file size in KB to be include in the digest.
-    pattern_type : PatternType
-        Type of pattern to use (either "include" or "exclude")
-    pattern : str
-        Pattern to include or exclude in the query, depending on the pattern type.
+    include_pattern : str
+        Patterns of files to include in the query.
+    exclude_pattern : str
+        Patterns of files to exclude from the query. Can be combined with ``include_pattern``.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
 
@@ -274,8 +274,8 @@ async def process_query(
     query.url = cast("str", query.url)
     query.max_file_size = max_file_size * 1024  # Convert to bytes since we currently use KB in higher levels
     query.ignore_patterns, query.include_patterns = process_patterns(
-        exclude_patterns=pattern if pattern_type == PatternType.EXCLUDE else None,
-        include_patterns=pattern if pattern_type == PatternType.INCLUDE else None,
+        exclude_patterns=exclude_pattern or None,
+        include_patterns=include_pattern or None,
     )
 
     # Check if digest already exists on S3 before cloning
@@ -283,8 +283,8 @@ async def process_query(
         query=query,
         input_text=input_text,
         max_file_size=max_file_size,
-        pattern_type=pattern_type.value,
-        pattern=pattern,
+        include_pattern=include_pattern,
+        exclude_pattern=exclude_pattern,
         token=token,
     )
     if s3_response:
@@ -305,7 +305,7 @@ async def process_query(
         digest_content = tree + "\n" + content
         _store_digest_content(query, clone_config, digest_content, summary, tree, content)
     except Exception as exc:
-        _print_error(query.url, exc, max_file_size, pattern_type, pattern)
+        _print_error(query.url, exc, max_file_size, include_pattern, exclude_pattern)
         # Clean up repository even if processing failed
         _cleanup_repository(clone_config)
         return IngestErrorResponse(error=f"{exc!s}")
@@ -319,8 +319,8 @@ async def process_query(
     _print_success(
         url=query.url,
         max_file_size=max_file_size,
-        pattern_type=pattern_type,
-        pattern=pattern,
+        include_pattern=include_pattern,
+        exclude_pattern=exclude_pattern,
         summary=summary,
     )
 
@@ -337,12 +337,12 @@ async def process_query(
         tree=tree,
         content=content,
         default_max_file_size=max_file_size,
-        pattern_type=pattern_type,
-        pattern=pattern,
+        include_pattern=include_pattern,
+        exclude_pattern=exclude_pattern,
     )
 
 
-def _print_query(url: str, max_file_size: int, pattern_type: str, pattern: str) -> None:
+def _print_query(url: str, max_file_size: int, include_pattern: str, exclude_pattern: str) -> None:
     """Print a formatted summary of the query details for debugging.
 
     Parameters
@@ -351,10 +351,10 @@ def _print_query(url: str, max_file_size: int, pattern_type: str, pattern: str) 
         The URL associated with the query.
     max_file_size : int
         The maximum file size allowed for the query, in bytes.
-    pattern_type : str
-        Specifies the type of pattern to use, either "include" or "exclude".
-    pattern : str
-        The actual pattern string to include or exclude in the query.
+    include_pattern : str
+        Patterns of files to include in the query.
+    exclude_pattern : str
+        Patterns of files to exclude from the query.
 
     """
     default_max_file_kb = 50
@@ -363,14 +363,14 @@ def _print_query(url: str, max_file_size: int, pattern_type: str, pattern: str) 
         extra={
             "url": url,
             "max_file_size_kb": int(max_file_size / 1024),
-            "pattern_type": pattern_type,
-            "pattern": pattern,
+            "include_pattern": include_pattern,
+            "exclude_pattern": exclude_pattern,
             "custom_size": int(max_file_size / 1024) != default_max_file_kb,
         },
     )
 
 
-def _print_error(url: str, exc: Exception, max_file_size: int, pattern_type: str, pattern: str) -> None:
+def _print_error(url: str, exc: Exception, max_file_size: int, include_pattern: str, exclude_pattern: str) -> None:
     """Print a formatted error message for debugging.
 
     Parameters
@@ -381,10 +381,10 @@ def _print_error(url: str, exc: Exception, max_file_size: int, pattern_type: str
         The exception raised during the query or process.
     max_file_size : int
         The maximum file size allowed for the query, in bytes.
-    pattern_type : str
-        Specifies the type of pattern to use, either "include" or "exclude".
-    pattern : str
-        The actual pattern string to include or exclude in the query.
+    include_pattern : str
+        Patterns of files to include in the query.
+    exclude_pattern : str
+        Patterns of files to exclude from the query.
 
     """
     logger.error(
@@ -392,14 +392,14 @@ def _print_error(url: str, exc: Exception, max_file_size: int, pattern_type: str
         extra={
             "url": url,
             "max_file_size_kb": int(max_file_size / 1024),
-            "pattern_type": pattern_type,
-            "pattern": pattern,
+            "include_pattern": include_pattern,
+            "exclude_pattern": exclude_pattern,
             "error": str(exc),
         },
     )
 
 
-def _print_success(url: str, max_file_size: int, pattern_type: str, pattern: str, summary: str) -> None:
+def _print_success(url: str, max_file_size: int, include_pattern: str, exclude_pattern: str, summary: str) -> None:
     """Print a formatted success message for debugging.
 
     Parameters
@@ -408,10 +408,10 @@ def _print_success(url: str, max_file_size: int, pattern_type: str, pattern: str
         The URL associated with the successful query.
     max_file_size : int
         The maximum file size allowed for the query, in bytes.
-    pattern_type : str
-        Specifies the type of pattern to use, either "include" or "exclude".
-    pattern : str
-        The actual pattern string to include or exclude in the query.
+    include_pattern : str
+        Patterns of files to include in the query.
+    exclude_pattern : str
+        Patterns of files to exclude from the query.
     summary : str
         A summary of the query result, including details like estimated tokens.
 
@@ -422,8 +422,8 @@ def _print_success(url: str, max_file_size: int, pattern_type: str, pattern: str
         extra={
             "url": url,
             "max_file_size_kb": int(max_file_size / 1024),
-            "pattern_type": pattern_type,
-            "pattern": pattern,
+            "include_pattern": include_pattern,
+            "exclude_pattern": exclude_pattern,
             "estimated_tokens": estimated_tokens,
         },
     )

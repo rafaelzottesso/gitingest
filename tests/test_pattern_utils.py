@@ -43,3 +43,10 @@ def test_process_patterns_include_and_ignore_overlap() -> None:
     assert exclude_patterns is not None
     assert "*.py" not in exclude_patterns
     assert "*.txt" in exclude_patterns
+
+
+def test_include_and_exclude_patterns_combined() -> None:
+    """Include and exclude patterns can be used together."""
+    ignore, include = process_patterns(exclude_patterns="__init__.py", include_patterns="*.py")
+    assert include == {"*.py"}
+    assert "__init__.py" in ignore

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from gitingest.utils.compat_func import removesuffix
 from server.server_config import MAX_FILE_SIZE_KB
@@ -31,10 +31,14 @@ class IngestRequest(BaseModel):
         The Git repository URL or slug to ingest.
     max_file_size : int
         Maximum file size slider position (0-500) for filtering files.
-    pattern_type : PatternType
-        Type of pattern to use for file filtering (include or exclude).
+    include_pattern : str
+        Glob patterns of files to include (comma/space separated).
+    exclude_pattern : str
+        Glob patterns of files to exclude (comma/space separated). May be combined with ``include_pattern``.
+    pattern_type : PatternType | None
+        Deprecated. Together with ``pattern``, kept for backward compatibility.
     pattern : str
-        Glob/regex pattern string for file filtering.
+        Deprecated. Applied to ``include_pattern`` or ``exclude_pattern`` according to ``pattern_type``.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
 
@@ -42,8 +46,13 @@ class IngestRequest(BaseModel):
 
     input_text: str = Field(..., description="Git repository URL or slug to ingest")
     max_file_size: int = Field(..., ge=1, le=MAX_FILE_SIZE_KB, description="File size in KB")
-    pattern_type: PatternType = Field(default=PatternType.EXCLUDE, description="Pattern type for file filtering")
-    pattern: str = Field(default="", description="Glob/regex pattern for file filtering")
+    include_pattern: str = Field(default="", description="Glob patterns of files to include")
+    exclude_pattern: str = Field(default="", description="Glob patterns of files to exclude")
+    pattern_type: Optional[PatternType] = Field(  # noqa: UP007 (pydantic)
+        default=None,
+        description="Deprecated: use include_pattern/exclude_pattern",
+    )
+    pattern: str = Field(default="", description="Deprecated: use include_pattern/exclude_pattern")
     token: str | None = Field(default=None, description="GitHub PAT for private repositories")
 
     @field_validator("input_text")
@@ -55,11 +64,22 @@ class IngestRequest(BaseModel):
             raise ValueError(err)
         return removesuffix(v.strip(), ".git")
 
-    @field_validator("pattern")
+    @field_validator("include_pattern", "exclude_pattern", "pattern")
     @classmethod
     def validate_pattern(cls, v: str) -> str:
-        """Validate ``pattern`` field."""
+        """Strip whitespace from pattern fields."""
         return v.strip()
+
+    @model_validator(mode="after")
+    def merge_legacy_pattern(self) -> IngestRequest:
+        """Fold the deprecated ``pattern_type``/``pattern`` pair into the new fields."""
+        if self.pattern:
+            if self.pattern_type == PatternType.INCLUDE:
+                self.include_pattern = f"{self.include_pattern},{self.pattern}" if self.include_pattern else self.pattern
+            else:
+                self.exclude_pattern = f"{self.exclude_pattern},{self.pattern}" if self.exclude_pattern else self.pattern
+            self.pattern = ""
+        return self
 
 
 class IngestSuccessResponse(BaseModel):
@@ -81,10 +101,10 @@ class IngestSuccessResponse(BaseModel):
         Processed content from the repository files.
     default_max_file_size : int
         The file size slider position used.
-    pattern_type : str
-        The pattern type used for filtering.
-    pattern : str
-        The pattern used for filtering.
+    include_pattern : str
+        The include pattern used for filtering.
+    exclude_pattern : str
+        The exclude pattern used for filtering.
 
     """
 
@@ -95,8 +115,8 @@ class IngestSuccessResponse(BaseModel):
     tree: str = Field(..., description="File tree structure")
     content: str = Field(..., description="Processed file content")
     default_max_file_size: int = Field(..., description="File size slider position used")
-    pattern_type: str = Field(..., description="Pattern type used")
-    pattern: str = Field(..., description="Pattern used")
+    include_pattern: str = Field(default="", description="Include pattern used")
+    exclude_pattern: str = Field(default="", description="Exclude pattern used")
 
 
 class IngestErrorResponse(BaseModel):
@@ -144,10 +164,10 @@ class QueryForm(BaseModel):
         Text or URL supplied in the form.
     max_file_size : int
         The maximum allowed file size for the input, specified by the user.
-    pattern_type : str
-        The type of pattern used for the query (``include`` or ``exclude``).
-    pattern : str
-        Glob/regex pattern string.
+    include_pattern : str
+        Glob patterns of files to include.
+    exclude_pattern : str
+        Glob patterns of files to exclude.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
 
@@ -155,8 +175,8 @@ class QueryForm(BaseModel):
 
     input_text: str
     max_file_size: int
-    pattern_type: str
-    pattern: str
+    include_pattern: str = ""
+    exclude_pattern: str = ""
     token: str | None = None
 
     @classmethod
@@ -164,8 +184,8 @@ class QueryForm(BaseModel):
         cls,
         input_text: StrForm,
         max_file_size: IntForm,
-        pattern_type: StrForm,
-        pattern: StrForm,
+        include_pattern: OptStrForm,
+        exclude_pattern: OptStrForm,
         token: OptStrForm,
     ) -> QueryForm:
         """Create a QueryForm from FastAPI form parameters.
@@ -176,10 +196,10 @@ class QueryForm(BaseModel):
             The input text provided by the user.
         max_file_size : IntForm
             The maximum allowed file size for the input.
-        pattern_type : StrForm
-            The type of pattern used for the query (``include`` or ``exclude``).
-        pattern : StrForm
-            Glob/regex pattern string.
+        include_pattern : OptStrForm
+            Glob patterns of files to include.
+        exclude_pattern : OptStrForm
+            Glob patterns of files to exclude.
         token : OptStrForm
             GitHub personal access token (PAT) for accessing private repositories.
 
@@ -192,7 +212,7 @@ class QueryForm(BaseModel):
         return cls(
             input_text=input_text,
             max_file_size=max_file_size,
-            pattern_type=pattern_type,
-            pattern=pattern,
+            include_pattern=include_pattern or "",
+            exclude_pattern=exclude_pattern or "",
             token=token,
         )

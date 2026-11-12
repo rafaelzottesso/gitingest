@@ -43,8 +43,8 @@ async def api_ingest(
     response = await _perform_ingestion(
         input_text=ingest_request.input_text,
         max_file_size=ingest_request.max_file_size,
-        pattern_type=ingest_request.pattern_type.value,
-        pattern=ingest_request.pattern,
+        include_pattern=ingest_request.include_pattern,
+        exclude_pattern=ingest_request.exclude_pattern,
         token=ingest_request.token,
     )
     # limit URL to 255 characters
@@ -59,7 +59,9 @@ async def api_ingest_get(
     user: str,
     repository: str,
     max_file_size: int = DEFAULT_FILE_SIZE_KB,
-    pattern_type: str = "exclude",
+    include_pattern: str = "",
+    exclude_pattern: str = "",
+    pattern_type: str = "",
     pattern: str = "",
     token: str = "",
 ) -> JSONResponse:
@@ -75,18 +77,25 @@ async def api_ingest_get(
 
     **Query Parameters**
     - **max_file_size** (`int`, optional): Maximum file size in KB to include in the digest (default: 5120 KB)
-    - **pattern_type** (`str`, optional): Type of pattern to use ("include" or "exclude", default: "exclude")
-    - **pattern** (`str`, optional): Pattern to include or exclude in the query (default: "")
+    - **include_pattern** (`str`, optional): Patterns of files to include (default: "")
+    - **exclude_pattern** (`str`, optional): Patterns of files to exclude; can be combined with `include_pattern` (default: "")
+    - **pattern_type** / **pattern** (`str`, optional): Deprecated; `pattern` is applied to the include or exclude list according to `pattern_type`
     - **token** (`str`, optional): GitHub personal access token for private repositories (default: "")
 
     **Returns**
     - **JSONResponse**: Success response with ingestion results or error response with appropriate HTTP status code
     """
+    if pattern:
+        if pattern_type == "include":
+            include_pattern = f"{include_pattern},{pattern}" if include_pattern else pattern
+        else:
+            exclude_pattern = f"{exclude_pattern},{pattern}" if exclude_pattern else pattern
+
     response = await _perform_ingestion(
         input_text=f"{user}/{repository}",
         max_file_size=max_file_size,
-        pattern_type=pattern_type,
-        pattern=pattern,
+        include_pattern=include_pattern,
+        exclude_pattern=exclude_pattern,
         token=token or None,
     )
     # limit URL to 255 characters

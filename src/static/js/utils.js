@@ -28,7 +28,7 @@ function getFileName(element) {
 }
 
 function toggleFile(element) {
-    const patternInput = document.getElementById('pattern');
+    const patternInput = document.getElementById('exclude_pattern');
     const patternFiles = patternInput.value ? patternInput.value.split(',').map((item) => item.trim()) : [];
 
     const directoryContainer = document.getElementById('directory-structure-container');
@@ -127,14 +127,14 @@ function collectFormData(form) {
     const inputText = form.querySelector('[name="input_text"]');
     const token = form.querySelector('[name="token"]');
     const hiddenInput = document.getElementById('max_file_size_kb');
-    const patternType = document.getElementById('pattern_type');
-    const pattern = document.getElementById('pattern');
+    const includePattern = document.getElementById('include_pattern');
+    const excludePattern = document.getElementById('exclude_pattern');
 
     if (inputText) {json_data.input_text = inputText.value;}
     if (token) {json_data.token = token.value;}
     if (hiddenInput) {json_data.max_file_size = hiddenInput.value;}
-    if (patternType) {json_data.pattern_type = patternType.value;}
-    if (pattern) {json_data.pattern = pattern.value;}
+    if (includePattern) {json_data.include_pattern = includePattern.value;}
+    if (excludePattern) {json_data.exclude_pattern = excludePattern.value;}
 
     return json_data;
 }
