@@ -10,6 +10,10 @@ SERVICE_NAME="${SERVICE_NAME:-gitingest}"
 REGION="${REGION:-us-central1}"
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-gitingest.zotts.com.br}"
 
+# gcloud account used for every command in this script (does not change your global gcloud config)
+GCLOUD_ACCOUNT="${GCLOUD_ACCOUNT:-rafael.zottesso@ifpr.edu.br}"
+export CLOUDSDK_CORE_ACCOUNT="${GCLOUD_ACCOUNT}"
+
 # Cloud Run Free-Tier friendly settings:
 # - min-instances=0: scales to zero when idle ($0 idle cost)
 # - cpu-throttling: request-based billing (billed only during active requests)
