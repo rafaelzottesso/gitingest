@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 
@@ -54,3 +55,31 @@ def get_version_info() -> dict[str, str]:
 # Use absolute path to templates directory
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=templates_dir)
+
+
+static_dir = Path(__file__).parent.parent / "static"
+_static_hash_cache: dict[str, tuple[float, str]] = {}
+
+
+def static_url(path: str) -> str:
+    """Return a ``/static/...`` URL with a content hash, e.g. ``/static/js/utils.js?v=1a2b3c4d``.
+
+    The hash changes whenever the file changes, so browsers and CDNs download the new version
+    automatically while unchanged files stay cached. Hashes are cached per file modification time.
+    """
+    file_path = static_dir / path
+    try:
+        mtime = file_path.stat().st_mtime
+    except OSError:
+        return f"/static/{path}"
+
+    cached = _static_hash_cache.get(path)
+    if cached is None or cached[0] != mtime:
+        digest = hashlib.md5(file_path.read_bytes(), usedforsecurity=False).hexdigest()[:8]
+        cached = (mtime, digest)
+        _static_hash_cache[path] = cached
+
+    return f"/static/{path}?v={cached[1]}"
+
+
+templates.env.globals["static_url"] = static_url

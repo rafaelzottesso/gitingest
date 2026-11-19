@@ -64,8 +64,8 @@
         {# Footer #}
         {% include 'components/footer.jinja' %}
         {# Scripts #}
-        <script defer src="/static/js/index.js?v=3"></script>
-        <script defer src="/static/js/utils.js?v=3"></script>
-        <script defer src="/static/js/posthog.js?v=3"></script>
+        <script defer src="{{ static_url('js/index.js') }}"></script>
+        <script defer src="{{ static_url('js/utils.js') }}"></script>
+        <script defer src="{{ static_url('js/posthog.js') }}"></script>
     </body>
 </html>
