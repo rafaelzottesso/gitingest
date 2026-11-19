@@ -78,13 +78,12 @@
         }
 
         input.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ',' || event.key === ' ') {
-                if (input.value.trim() || event.key === 'Enter') {
-                    event.preventDefault();
-                    commit();
-                } else if (event.key !== 'Enter') {
-                    event.preventDefault();
-                }
+            if (event.key === 'Enter') {
+                // Never submit the form from here; patterns are created with comma or space
+                event.preventDefault();
+            } else if (event.key === ',' || event.key === ' ') {
+                event.preventDefault();
+                commit();
             } else if (event.key === 'Backspace' && !input.value && items.length) {
                 api.remove(items[items.length - 1]);
             }
@@ -108,10 +107,12 @@
 
     function openModal() {
         document.getElementById('patternHelpModal')?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
     }
 
     function closeModal() {
         document.getElementById('patternHelpModal')?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
     }
 
     function init() {
@@ -122,6 +123,10 @@
                 fields[id] = createField(hidden);
             }
         });
+        // Move the modal to <body> so it is not trapped in the form card's stacking context
+        const modal = document.getElementById('patternHelpModal');
+
+        if (modal) {document.body.appendChild(modal);}
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {closeModal();}
         });
@@ -141,8 +146,21 @@
             return true;
         },
         hasExclude: (item) => Boolean(fields.exclude_pattern?.has(item)),
-        addExample(id, text) {
+        addExample(id, text, button) {
             const added = fields[id]?.add(text);
+
+            if (button) {
+                const original = button.dataset.label || button.textContent;
+
+                button.dataset.label = original;
+                button.textContent = added ? '\u2713 Added' : '\u2713 Already added';
+                button.classList.add('bg-[#FE4A60]', 'text-white');
+                clearTimeout(button._t);
+                button._t = setTimeout(() => {
+                    button.textContent = original;
+                    button.classList.remove('bg-[#FE4A60]', 'text-white');
+                }, 1500);
+            }
 
             if (window.showToast) {
                 window.showToast(added ? `Added to ${id === 'include_pattern' ? 'include' : 'exclude'}: ${text}` : 'Already in the list');
