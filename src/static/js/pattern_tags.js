@@ -123,6 +123,12 @@
                 fields[id] = createField(hidden);
             }
         });
+        // Safety net: Enter inside a pattern box must never submit the form
+        document.getElementById('ingestForm')?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && event.target.closest && event.target.closest('[data-tag-box]')) {
+                event.preventDefault();
+            }
+        }, true);
         // Move the modal to <body> so it is not trapped in the form card's stacking context
         const modal = document.getElementById('patternHelpModal');
 
