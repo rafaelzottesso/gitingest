@@ -27,36 +27,35 @@
                     </button>
                 </div>
             </div>
-            <!-- Controls row: pattern selector, file size slider, PAT checkbox with PAT field below -->
-            <div id="controlsRow"
-                 class="mt-7 grid gap-6 grid-cols-1 sm:grid-cols-[3fr_2fr] md:gap-x-10 lg:grid-cols-[5fr_4fr_4fr] lg:gap-y-0">
-                <!-- Pattern inputs (include and exclude can be used together) -->
-                <div class="w-full self-center flex flex-col gap-3">
-                    <div class="w-full relative">
-                        <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
-                        <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
-                            <label for="include_pattern" class="pattern-select flex items-center">Include</label>
-                            <input type="text"
-                                   id="include_pattern"
-                                   name="include_pattern"
-                                   placeholder="*.py, src/"
-                                   value="{{ include_pattern if include_pattern else '' }}"
-                                   class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
-                        </div>
-                    </div>
-                    <div class="w-full relative">
-                        <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
-                        <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
-                            <label for="exclude_pattern" class="pattern-select flex items-center">Exclude</label>
-                            <input type="text"
-                                   id="exclude_pattern"
-                                   name="exclude_pattern"
-                                   placeholder="__init__.py, tests/"
-                                   value="{{ exclude_pattern if exclude_pattern else '' }}"
-                                   class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
-                        </div>
+            <!-- Pattern inputs (include and exclude can be used together) -->
+            <div class="w-full flex flex-col gap-3 mt-7">
+                <div class="w-full relative">
+                    <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
+                    <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
+                        <label for="include_pattern" class="pattern-select flex items-center">Include</label>
+                        <input type="text"
+                               id="include_pattern"
+                               name="include_pattern"
+                               placeholder="*.py, src/"
+                               value="{{ include_pattern if include_pattern else '' }}"
+                               class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
                     </div>
                 </div>
+                <div class="w-full relative">
+                    <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
+                    <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
+                        <label for="exclude_pattern" class="pattern-select flex items-center">Exclude</label>
+                        <input type="text"
+                               id="exclude_pattern"
+                               name="exclude_pattern"
+                               placeholder="__init__.py, tests/"
+                               value="{{ exclude_pattern if exclude_pattern else '' }}"
+                               class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
+                    </div>
+                </div>
+            </div>
+            <!-- Controls row: file size slider and PAT checkbox with PAT field below -->
+            <div id="controlsRow" class="mt-7 grid gap-6 grid-cols-1 sm:grid-cols-2 md:gap-x-10">
                 <!-- File size selector -->
                 <div class="w-full self-center">
                     <label for="file_size" class="block text-gray-700 mb-1">
@@ -72,7 +71,7 @@
                     <input type="hidden" id="max_file_size_kb" name="max_file_size" value="">
                 </div>
                 <!-- PAT checkbox with PAT field below -->
-                <div class="flex flex-col items-start w-full sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:pt-3.5">
+                <div class="flex flex-col items-start w-full ">
                     <!-- PAT checkbox -->
                     <div class="flex items-center space-x-2">
                         <label for="showAccessSettings"

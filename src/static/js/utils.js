@@ -39,19 +39,44 @@ function toggleFile(element) {
         return;
     }
 
-    element.classList.toggle('line-through');
-    element.classList.toggle('text-gray-500');
-
     const fileName = getFileName(element);
     const fileIndex = patternFiles.indexOf(fileName);
+    const excluded = fileIndex === -1;
 
-    if (fileIndex !== -1) {
-        patternFiles.splice(fileIndex, 1);
-    } else {
+    if (excluded) {
         patternFiles.push(fileName);
+    } else {
+        patternFiles.splice(fileIndex, 1);
     }
 
+    element.classList.toggle('line-through', excluded);
+    element.classList.toggle('text-gray-500', excluded);
+
     patternInput.value = patternFiles.join(', ');
+    showToast(excluded ? `Added to exclude: ${fileName}` : `Removed from exclude: ${fileName}`);
+}
+
+// Small, unobtrusive notification at the bottom of the screen
+function showToast(message) {
+    let container = document.getElementById('toast-container');
+
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+
+    toast.className = 'px-4 py-2 bg-gray-900 text-white text-sm rounded border-[3px] border-gray-900 shadow-[3px_3px_0_#FE4A60] transition-opacity duration-300 opacity-0 max-w-[90vw] break-all';
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+    setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
 
 // Copy functionality
@@ -412,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Make sure these are available globally
 window.handleSubmit = handleSubmit;
 window.toggleFile = toggleFile;
+window.showToast = showToast;
 window.copyText = copyText;
 window.copyFullDigest = copyFullDigest;
 window.downloadFullDigest = downloadFullDigest;
