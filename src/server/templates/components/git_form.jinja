@@ -29,28 +29,51 @@
             </div>
             <!-- Pattern inputs (include and exclude can be used together) -->
             <div class="w-full flex flex-col gap-3 mt-7">
+                <div class="flex justify-end -mb-1">
+                    <button type="button"
+                            onclick="PatternTags.openModal()"
+                            class="text-sm text-gray-600 hover:text-gray-800 underline flex items-center gap-1">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01" />
+                        </svg>
+                        How do patterns work?
+                    </button>
+                </div>
                 <div class="w-full relative">
                     <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
-                    <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
-                        <label for="include_pattern" class="pattern-select flex items-center">Include</label>
-                        <input type="text"
+                    <div class="flex items-stretch relative z-20 border-[3px] border-gray-900 rounded bg-white">
+                        <label for="include_pattern_input" class="pattern-select flex items-center">Include</label>
+                        <div data-tag-box="include_pattern"
+                             class="flex flex-wrap items-center gap-1.5 w-full p-1.5 bg-[#E8F0FE] cursor-text">
+                            <input type="text"
+                                   id="include_pattern_input"
+                                   autocomplete="off"
+                                   placeholder="Type a pattern, then press Enter or comma"
+                                   class="flex-1 min-w-[10rem] py-0.5 px-1 bg-transparent focus:outline-none">
+                        </div>
+                        <input type="hidden"
                                id="include_pattern"
                                name="include_pattern"
-                               placeholder="*.py, src/"
-                               value="{{ include_pattern if include_pattern else '' }}"
-                               class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
+                               value="{{ include_pattern if include_pattern else '' }}">
                     </div>
                 </div>
                 <div class="w-full relative">
                     <div class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10"></div>
-                    <div class="flex relative z-20 border-[3px] border-gray-900 rounded bg-white">
-                        <label for="exclude_pattern" class="pattern-select flex items-center">Exclude</label>
-                        <input type="text"
+                    <div class="flex items-stretch relative z-20 border-[3px] border-gray-900 rounded bg-white">
+                        <label for="exclude_pattern_input" class="pattern-select flex items-center">Exclude</label>
+                        <div data-tag-box="exclude_pattern"
+                             class="flex flex-wrap items-center gap-1.5 w-full p-1.5 bg-[#E8F0FE] cursor-text">
+                            <input type="text"
+                                   id="exclude_pattern_input"
+                                   autocomplete="off"
+                                   placeholder="Type a pattern, then press Enter or comma"
+                                   class="flex-1 min-w-[10rem] py-0.5 px-1 bg-transparent focus:outline-none">
+                        </div>
+                        <input type="hidden"
                                id="exclude_pattern"
                                name="exclude_pattern"
-                               placeholder="__init__.py, tests/"
-                               value="{{ exclude_pattern if exclude_pattern else '' }}"
-                               class=" py-2 px-2 bg-[#E8F0FE] focus:outline-none w-full">
+                               value="{{ exclude_pattern if exclude_pattern else '' }}">
                     </div>
                 </div>
             </div>
@@ -203,7 +226,84 @@
                 </div>
             </div>
         {% endif %}
+        <!-- Pattern help modal -->
+        <div id="patternHelpModal"
+             class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50"
+             onclick="if (event.target === this) PatternTags.closeModal()">
+            <div class="relative w-full max-w-2xl max-h-[90vh]">
+                <div class="w-full h-full absolute inset-0 bg-gray-900 rounded-xl translate-y-2 translate-x-2"></div>
+                <div class="relative z-10 max-h-[90vh] overflow-y-auto rounded-xl border-[3px] border-gray-900 bg-[#fff4da] p-6 text-gray-900">
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <h2 class="text-xl font-bold">Include &amp; Exclude patterns</h2>
+                        <button type="button"
+                                onclick="PatternTags.closeModal()"
+                                aria-label="Close"
+                                class="px-2 border-[3px] border-gray-900 rounded bg-[#ffc480] font-bold leading-snug">&times;</button>
+                    </div>
+                    <ul class="list-disc pl-5 space-y-1 text-sm text-gray-800 mb-4">
+                        <li>Each pattern becomes a block. Press <b>Enter</b>, <b>comma</b> or <b>space</b> to create it; click the <b>x</b> (or Backspace) to remove it.</li>
+                        <li>You can <b>paste a whole list</b> such as <code class="font-mono">*.py, *.md, tests/*</code> and it is split into blocks automatically.</li>
+                        <li><b>Include</b> keeps only matching files. <b>Exclude</b> removes matching files. Both can be used together.</li>
+                        <li>Patterns follow <code class="font-mono">.gitignore</code> style: <code class="font-mono">*</code> matches any characters, a trailing <code class="font-mono">/</code> means a directory, and <code class="font-mono">*/name/*</code> matches a folder at any depth.</li>
+                        <li>Patterns cannot contain spaces (a space separates two patterns).</li>
+                        <li>After an ingest, <b>click a line in the directory tree</b> to add or remove it from Exclude.</li>
+                    </ul>
+                    <h3 class="font-bold mb-1">Examples</h3>
+                    <ul>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">*.py</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Every Python file</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', '*.py')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', '*.py')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">*.min.js</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Minified JS files</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', '*.min.js')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', '*.min.js')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">src/</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">The whole src directory</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', 'src/')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', 'src/')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">*/migrations/*</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Any migrations folder, at any depth</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', '*/migrations/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', '*/migrations/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">node_modules/*</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Dependencies folder</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', 'node_modules/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', 'node_modules/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">README.md</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">One specific file</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', 'README.md')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', 'README.md')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">base*.html</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Files starting with base</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', 'base*.html')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', 'base*.html')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                        <li class="flex flex-wrap items-center gap-2 py-1.5 border-b border-gray-900/20">
+                            <code class="font-mono text-sm bg-[#ffc480] border-2 border-gray-900 rounded px-2 py-0.5">*/templates/*</code>
+                            <span class="flex-1 min-w-[8rem] text-sm text-gray-700">Any templates folder</span>
+                            <button type="button" onclick="PatternTags.addExample('include_pattern', '*/templates/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Include</button>
+                            <button type="button" onclick="PatternTags.addExample('exclude_pattern', '*/templates/*')" class="text-xs px-2 py-0.5 bg-[#EBDBB7] hover:bg-[#FFC480] border-2 border-gray-900 rounded">+ Exclude</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <script defer src="/static/js/git.js"></script>
+<script defer src="/static/js/pattern_tags.js"></script>
 <script defer src="/static/js/git_form.js"></script>

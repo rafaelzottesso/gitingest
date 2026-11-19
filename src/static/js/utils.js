@@ -28,9 +28,6 @@ function getFileName(element) {
 }
 
 function toggleFile(element) {
-    const patternInput = document.getElementById('exclude_pattern');
-    const patternFiles = patternInput.value ? patternInput.value.split(',').map((item) => item.trim()) : [];
-
     const directoryContainer = document.getElementById('directory-structure-container');
     const treeLineElements = Array.from(directoryContainer.children).filter((child) => child.tagName === 'PRE');
 
@@ -40,21 +37,30 @@ function toggleFile(element) {
     }
 
     const fileName = getFileName(element);
-    const fileIndex = patternFiles.indexOf(fileName);
-    const excluded = fileIndex === -1;
-
-    if (excluded) {
-        patternFiles.push(fileName);
-    } else {
-        patternFiles.splice(fileIndex, 1);
-    }
+    const excluded = window.PatternTags.toggleExclude(fileName);
 
     element.classList.toggle('line-through', excluded);
     element.classList.toggle('text-gray-500', excluded);
 
-    patternInput.value = patternFiles.join(', ');
     showToast(excluded ? `Added to exclude: ${fileName}` : `Removed from exclude: ${fileName}`);
 }
+
+// Keep strike-through in the directory tree in sync with the Exclude tags
+function syncTreeStrike() {
+    const dirPre = document.getElementById('directory-structure-pre');
+
+    if (!dirPre || !window.PatternTags) {return;}
+    Array.from(dirPre.querySelectorAll('pre[name="tree-line"]')).slice(2).forEach((line) => {
+        const excluded = window.PatternTags.hasExclude(getFileName(line));
+
+        line.classList.toggle('line-through', excluded);
+        line.classList.toggle('text-gray-500', excluded);
+    });
+}
+
+document.addEventListener('change', (event) => {
+    if (event.target && event.target.id === 'exclude_pattern') {syncTreeStrike();}
+});
 
 // Small, unobtrusive notification at the bottom of the screen
 function showToast(message) {
@@ -225,6 +231,7 @@ function handleSuccessfulResponse(data) {
             pre.onclick = function () { toggleFile(this); };
             dirPre.appendChild(pre);
         });
+        syncTreeStrike();
     }
 
     // Scroll to results
